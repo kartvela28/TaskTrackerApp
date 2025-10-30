@@ -1,15 +1,5 @@
 ﻿using System.Text.Json;
-using System.IO;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-
 using TaskTrackerApp.Models;
-using System.IO.Enumeration;
-using Microsoft.Win32.SafeHandles;
-using Microsoft.VisualBasic;
-using System.Text.Unicode;
 
 public class Program
 {
