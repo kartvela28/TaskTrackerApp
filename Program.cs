@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.Metrics;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 public class Program
 {
@@ -16,7 +19,10 @@ public class Program
 
         // TODO refactor
         UserTaskReader.ReadAllTaskFromFile();
-        int counter = 1;
+        
+        int counter = (from x in FileServicesHelper.UserTasks
+                       select x.Id).DefaultIfEmpty(0).Max();
+        
         char[] descriptionDelimiter = ['"', '\''];
 
 
@@ -40,7 +46,7 @@ public class Program
                     //temp task creation
                     new UserTaskDTO()
                     {
-                        Id = counter++,
+                        Id = ++counter,
                         Description = description,
                         UserTaskStatus = UserTaskStatus.Todo,
                         CreatedAt = DateTime.UtcNow,
@@ -57,17 +63,29 @@ public class Program
                     int newDescriptionEnd = userInput.IndexOfAny(descriptionDelimiter, newDescriptionStart + 1);
                     string newDescription = userInput.Substring(newDescriptionStart, newDescriptionEnd - newDescriptionStart);
                     bool updated = FileServicesHelper.UpdateTaskDescription(taskid, newDescription);
-                    Console.WriteLine($"update operation {(updated ? "Succeed":"Failed")}");
+                    Console.WriteLine($"update operation {(updated ? "Succeed" : "Failed")}");
                     // Console.WriteLine($"Coming soon");
+                    break;
+
+                case "mark":
+                    // Console.WriteLine($"Enter task ID and status.(7 3) \n\t1 - in progress \n\t2 - pending \n\t3 - done");
+                    int.TryParse(action[1], out int statustaskid);
+                    bool statusupdate = FileServicesHelper.ChangeTaskStatus(statustaskid, action[2]);
+                    Console.WriteLine($"update operation of task status {(statusupdate ? "Succeed" : "Failed")}");
+
+
                     break;
                 case "delete":
-                    Console.WriteLine("delete operation");
-                    Console.WriteLine($"Coming soon");
+                    if (action.Length == 1) { Console.WriteLine($"Specify task id want to remove"); break; }
+
+                    bool deletestatus = FileServicesHelper.DeleteUserTask(action[1]);
+                    Console.WriteLine($"update operation {(deletestatus ? "Succeed" : "Failed")}");
+                    // Console.WriteLine("delete operation");
+                    // Console.WriteLine($"Coming soon");
                     break;
                 case "list":
-                    // Console.WriteLine($"List {action[1]}");
-                    FileServicesHelper.ListUserTasks();
-                    // Console.WriteLine($"Coming soon");
+                    if (action.Length == 1) FileServicesHelper.ListUserTasks();
+                    else FileServicesHelper.ListUserTasks(action[1]);
                     break;
                 case "analytics":
                     Console.WriteLine($"Analytics of {action[1]}");
@@ -106,7 +124,7 @@ public sealed class UserTaskDTO
     //New ToString for better visibility
     public override string ToString()
     {
-        return $"\n\tID: {Id}; \n\tDescription: {Description}; \n\tStatus: {UserTaskStatus};\n";
+        return $"\n\tID: {Id}; \n\tDescription: {Description}; \n\tStatus: {UserTaskStatus};\n\tlast update time: {UpdatedAt}\n";
     }
 
 }
@@ -149,6 +167,36 @@ public abstract class FileServicesHelper
         {
             Console.WriteLine(task.ToString());
         }
+    }
+
+    public static void ListUserTasks(string status)
+    {
+        UserTaskStatus filter = Enum.Parse<UserTaskStatus>(status, true);
+        List<UserTaskDTO> tempTasks = UserTasks.FindAll(fi => fi.UserTaskStatus == filter);
+        foreach (UserTaskDTO task in tempTasks)
+        {
+            Console.WriteLine(task.ToString());
+        }
+        tempTasks.Clear();
+    }
+
+    public static bool ChangeTaskStatus(int taskid, string status)
+    {
+        UserTaskDTO? updateStatus = UserTasks.Find(task => task.Id == taskid);
+        if (updateStatus == null) return false;
+
+        updateStatus.UserTaskStatus = Enum.Parse<UserTaskStatus>(status, true);
+        updateStatus.UpdatedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    public static bool DeleteUserTask(string arg)
+    {
+        int.TryParse(arg, out int deleteId);
+        UserTaskDTO? tasktoremove = UserTasks.Find(task => task.Id == deleteId);
+        if (tasktoremove == null) return false;
+        UserTasks.Remove(tasktoremove);
+        return true;
     }
 }
 
