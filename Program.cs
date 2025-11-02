@@ -13,8 +13,12 @@ public class Program
         Console.WriteLine(usage);
         Console.WriteLine($"\nExit charaqter 'q'");
 
-        // TODO temp readfile before refactor
+
+        // TODO refactor
         UserTaskReader.ReadAllTaskFromFile();
+        int counter = 1;
+        char[] descriptionDelimiter = ['"', '\''];
+
 
         do
         {
@@ -24,19 +28,14 @@ public class Program
             {
                 case "q":
                     exit = true;
+                    UserTaskWriter.WriteUserTask();
                     break;
-
-
-
                 case "add":
 
                     // Parsing of task description 
-                    char[] descriptionDelimiter = ['"', '\''];
                     int descriptionStart = userInput.IndexOfAny(descriptionDelimiter) + 1;
                     int descriptionEnd = userInput.IndexOfAny(descriptionDelimiter, descriptionStart + 1);
                     string description = userInput.Substring(descriptionStart, descriptionEnd - descriptionStart);
-
-                    int counter = 1;
 
                     //temp task creation
                     new UserTaskDTO()
@@ -52,21 +51,23 @@ public class Program
                     break;
 
 
-
-
-
-
                 case "update":
-                    Console.WriteLine("update operation");
-                    Console.WriteLine($"Coming soon");
+                    int.TryParse(action[1], out int taskid);
+                    int newDescriptionStart = userInput.IndexOfAny(descriptionDelimiter) + 1;
+                    int newDescriptionEnd = userInput.IndexOfAny(descriptionDelimiter, newDescriptionStart + 1);
+                    string newDescription = userInput.Substring(newDescriptionStart, newDescriptionEnd - newDescriptionStart);
+                    bool updated = FileServicesHelper.UpdateTaskDescription(taskid, newDescription);
+                    Console.WriteLine($"update operation {(updated ? "Succeed":"Failed")}");
+                    // Console.WriteLine($"Coming soon");
                     break;
                 case "delete":
                     Console.WriteLine("delete operation");
                     Console.WriteLine($"Coming soon");
                     break;
                 case "list":
-                    Console.WriteLine($"List {action[1]}");
-                    Console.WriteLine($"Coming soon");
+                    // Console.WriteLine($"List {action[1]}");
+                    FileServicesHelper.ListUserTasks();
+                    // Console.WriteLine($"Coming soon");
                     break;
                 case "analytics":
                     Console.WriteLine($"Analytics of {action[1]}");
@@ -99,15 +100,14 @@ public sealed class UserTaskDTO
     public UserTaskDTO()
     {
         FileServicesHelper.UserTasks.Add(this);
-        UserTaskWriter.WriteUserTask();
+        // UserTaskWriter.WriteUserTask();
     }
 
     //New ToString for better visibility
     public override string ToString()
     {
-        return $"\n\tID: {Id}; \n\tDescription: {Description}; \n\tStatus: {UserTaskStatus};";
+        return $"\n\tID: {Id}; \n\tDescription: {Description}; \n\tStatus: {UserTaskStatus};\n";
     }
-
 
 }
 
@@ -123,6 +123,31 @@ public abstract class FileServicesHelper
         if (!Directory.Exists(TasksDirectory))
         {
             Directory.CreateDirectory(TasksDirectory);
+        }
+    }
+
+    public static bool UpdateTaskDescription(int? id, string? description)
+    {
+        if (id == null || description == null)
+        {
+            return false;
+        }
+        UserTaskDTO? update = UserTasks.Find(task => task.Id == id);
+        if (update == null)
+        {
+            return false;
+        }
+        update.Description = description;
+        update.UpdatedAt = DateTime.UtcNow;
+        Console.WriteLine(update.ToString());
+        return true;
+    }
+
+    public static void ListUserTasks()
+    {
+        foreach (UserTaskDTO task in UserTasks)
+        {
+            Console.WriteLine(task.ToString());
         }
     }
 }
@@ -146,13 +171,7 @@ public class UserTaskReader : FileServicesHelper
         try
         {
             string json = File.ReadAllText(TasksFile);
-            List<UserTaskDTO> temporary;
-            temporary = JsonSerializer.Deserialize<List<UserTaskDTO>>(json, _options)?? new();
-
-            foreach (UserTaskDTO usertask in temporary)
-            {
-                UserTasks.Add(usertask);
-            }
+            JsonSerializer.Deserialize<List<UserTaskDTO>>(json, _options);
         }
         catch (NullReferenceException ex)
         {
@@ -183,4 +202,3 @@ public class UserTaskWriter : FileServicesHelper
         File.WriteAllText(TasksFile, taskJson);
     }
 }
-
