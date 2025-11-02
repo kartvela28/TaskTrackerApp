@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using TaskTrackerApp.Models;
 
 public class Program
 {
@@ -14,6 +13,8 @@ public class Program
         Console.WriteLine(usage);
         Console.WriteLine($"\nExit charaqter 'q'");
 
+        // TODO temp readfile before refactor
+        UserTaskReader.ReadAllTaskFromFile();
 
         do
         {
@@ -34,9 +35,6 @@ public class Program
                     int descriptionStart = userInput.IndexOfAny(descriptionDelimiter) + 1;
                     int descriptionEnd = userInput.IndexOfAny(descriptionDelimiter, descriptionStart + 1);
                     string description = userInput.Substring(descriptionStart, descriptionEnd - descriptionStart);
-
-
-                    Tasks task = new Tasks(description); // ??????
 
                     int counter = 1;
 
@@ -100,7 +98,7 @@ public sealed class UserTaskDTO
 
     public UserTaskDTO()
     {
-        UserTaskWriter.UserTasks.Add(this);
+        FileServicesHelper.UserTasks.Add(this);
         UserTaskWriter.WriteUserTask();
     }
 
@@ -131,7 +129,44 @@ public abstract class FileServicesHelper
 
 public class UserTaskReader : FileServicesHelper
 {
+    private static readonly JsonSerializerOptions _options = new()
+    {
+        WriteIndented = true,
+        MaxDepth = 64,
+        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+    };
+    public static void ReadAllTaskFromFile()
+    {
+        // If UserTasks file does not exist, stop reading
+        if (!File.Exists(TasksFile))
+        {
+            return;
+        }
 
+        try
+        {
+            string json = File.ReadAllText(TasksFile);
+            List<UserTaskDTO> temporary;
+            temporary = JsonSerializer.Deserialize<List<UserTaskDTO>>(json, _options)?? new();
+
+            foreach (UserTaskDTO usertask in temporary)
+            {
+                UserTasks.Add(usertask);
+            }
+        }
+        catch (NullReferenceException ex)
+        {
+            Console.WriteLine($"No User Tasks detected\n{ex.Message}");
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"No Json inside file\n{ex.Message}");
+        }
+        catch (ArgumentNullException ex)
+        {
+            Console.WriteLine($"TK - Argument null exception {ex.Message}");
+        }
+    }
 }
 
 public class UserTaskWriter : FileServicesHelper
