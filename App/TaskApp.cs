@@ -117,7 +117,7 @@ public class TaskApp
         int lastQuote = command.LastIndexOfAny(descriptionDelimiter);
 
         if (firstQuote == -1 || lastQuote == -1 || firstQuote == lastQuote)
-            return string.Empty;
+            throw new ArgumentException("\nNew description should not be null");
 
         return command.Substring(firstQuote + 1, lastQuote - firstQuote - 1).Trim();
     }
