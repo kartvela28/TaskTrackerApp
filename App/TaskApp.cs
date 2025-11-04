@@ -16,6 +16,7 @@ public class TaskApp
     public void Run()
     {
         _repo.Reader.ReadAllTaskFromFile();
+        _repo.SetCounter();
 
         AppMessages.PrintBanner();
         AppMessages.PrintUsage();
@@ -126,10 +127,10 @@ public class TaskApp
         string[] parts = command.Split(" ");
         if (parts.Length < 2) return null;
 
-        if (Enum.TryParse<UserTaskStatus>(parts[1], true, out var filter))
+        if (Enum.TryParse<UserTaskStatus>(parts[parts.Length-1], true, out var filter))
             return filter;
 
-        Console.WriteLine($"Invalid status \"{parts[1]}\". Valid: Todo, InProgress, Pending, Done");
+        Console.WriteLine($"Invalid status \"{parts[parts.Length-1]}\". Valid: Todo, InProgress, Pending, Done");
         return null;
     }
 

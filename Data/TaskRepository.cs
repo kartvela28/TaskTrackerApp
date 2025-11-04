@@ -22,10 +22,14 @@ public class TaskRepository
             Directory.CreateDirectory(TasksDirectory);
         }
 
-        _idCounter = UserTasks.Any() ? UserTasks.Max(t => t.Id) : 0;
-
         Reader = new UserTaskReader(this);
         Writer = new UserTaskWriter(this);
+
+    }
+
+    public void SetCounter()
+    {
+        _idCounter = UserTasks.Any() ? UserTasks.Max(t => t.Id) : 0;
     }
 
     public UserTaskDTO AddTask(string description)
