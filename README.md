@@ -18,5 +18,5 @@ A simple console-based task tracking application written in C#.
 ### Installation  
 1. Clone the repository:  
    ```bash
-   git clone https://github.com/YourUsername/TaskTrackerApp.git
+   git clone https://github.com/kartvela28/TaskTrackerApp.git
    cd TaskTrackerApp
