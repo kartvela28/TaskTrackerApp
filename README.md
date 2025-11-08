@@ -1,6 +1,7 @@
 # Task Tracker App  
-A simple console-based task tracking application written in C#. 
+A simple console-based task tracking application written in C#.
 Project URL: https://github.com/kartvela28/TaskTrackerApp
+Project Details URL: https://roadmap.sh/projects/task-tracker
 
 ## ✅ Features  
 - Add a new task with description  
